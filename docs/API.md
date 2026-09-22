@@ -16,7 +16,7 @@ http://localhost:5111/swagger
 
 - JSON is used for request and response bodies.
 - IDs are GUID values.
-- Protected endpoints will require a bearer token after JWT authentication is added.
+- Protected endpoints require a bearer token from `/api/auth/login`.
 - A workshop owner manages one workshop and its employees.
 - Customers use a separate customer portal area.
 - Vehicle details are stored on `JobCard`; there is no separate Vehicle API in the first version.
@@ -88,7 +88,7 @@ Use the returned token for protected endpoints:
 Authorization: Bearer {accessToken}
 ```
 
-## Planned API Modules
+## Current API Modules
 
 ### Authentication
 
@@ -142,7 +142,7 @@ Technician
 | `PUT` | `/api/customers/{customerId}` | Update a customer |
 | `DELETE` | `/api/customers/{customerId}` | Remove a customer |
 
-### Customer Portal
+### Customer Portal (Not Implemented Yet)
 
 Customers must only access their own records.
 
@@ -161,11 +161,8 @@ Vehicle information is captured directly on each job card.
 |---|---|---|
 | `POST` | `/api/workshops/{workshopId}/job-cards` | Create a job card |
 | `GET` | `/api/workshops/{workshopId}/job-cards` | List workshop job cards |
-| `GET` | `/api/job-cards/{jobCardId}` | View a job card |
-| `PUT` | `/api/job-cards/{jobCardId}` | Update a job card |
-| `DELETE` | `/api/job-cards/{jobCardId}` | Cancel or remove a job card |
-| `PATCH` | `/api/job-cards/{jobCardId}/status` | Change job status |
-| `GET` | `/api/job-cards/{jobCardId}/tracking` | View status history and progress |
+| `GET` | `/api/workshops/{workshopId}/job-cards/{jobCardId}` | View a job card |
+| `PATCH` | `/api/workshops/{workshopId}/job-cards/{jobCardId}/status` | Change job status |
 
 Job card vehicle fields:
 
@@ -197,10 +194,8 @@ Cancelled
 |---|---|---|
 | `POST` | `/api/job-cards/{jobCardId}/tasks` | Add a task |
 | `GET` | `/api/job-cards/{jobCardId}/tasks` | List job tasks |
-| `PUT` | `/api/tasks/{taskId}` | Update a task |
-| `POST` | `/api/tasks/{taskId}/assign` | Assign a task to an employee |
-| `PATCH` | `/api/tasks/{taskId}/status` | Change task status |
-| `DELETE` | `/api/tasks/{taskId}` | Remove a task |
+| `POST` | `/api/job-cards/{jobCardId}/tasks/{taskId}/assign` | Assign a task to an employee |
+| `PATCH` | `/api/job-cards/{jobCardId}/tasks/{taskId}/status` | Change task status |
 
 Supported task statuses:
 
@@ -218,9 +213,8 @@ Cancelled
 |---|---|---|
 | `POST` | `/api/workshops/{workshopId}/services` | Create a service |
 | `GET` | `/api/workshops/{workshopId}/services` | List services |
-| `GET` | `/api/services/{serviceId}` | View a service |
-| `PUT` | `/api/services/{serviceId}` | Update a service |
-| `DELETE` | `/api/services/{serviceId}` | Deactivate a service |
+| `PUT` | `/api/workshops/{workshopId}/services/{serviceId}` | Update a service |
+| `DELETE` | `/api/workshops/{workshopId}/services/{serviceId}` | Deactivate a service |
 
 ### Parts and Inventory
 
@@ -228,10 +222,9 @@ Cancelled
 |---|---|---|
 | `POST` | `/api/workshops/{workshopId}/parts` | Add a part |
 | `GET` | `/api/workshops/{workshopId}/parts` | List parts |
-| `GET` | `/api/parts/{partId}` | View a part |
-| `PUT` | `/api/parts/{partId}` | Update a part |
-| `PATCH` | `/api/parts/{partId}/stock` | Adjust stock quantity |
-| `DELETE` | `/api/parts/{partId}` | Deactivate a part |
+| `PUT` | `/api/workshops/{workshopId}/parts/{partId}` | Update a part |
+| `PATCH` | `/api/workshops/{workshopId}/parts/{partId}/stock` | Adjust stock quantity |
+| `DELETE` | `/api/workshops/{workshopId}/parts/{partId}` | Deactivate a part |
 
 ### Invoices and Payments
 
@@ -239,19 +232,14 @@ Cancelled
 |---|---|---|
 | `POST` | `/api/job-cards/{jobCardId}/invoice` | Create an invoice |
 | `GET` | `/api/invoices/{invoiceId}` | View an invoice |
-| `PUT` | `/api/invoices/{invoiceId}` | Update an invoice |
 | `POST` | `/api/invoices/{invoiceId}/finalize` | Finalize an invoice |
 | `POST` | `/api/invoices/{invoiceId}/payments` | Record a payment |
 | `GET` | `/api/invoices/{invoiceId}/payments` | List invoice payments |
 
-## Build Order
+## Future Modules
 
-1. JWT authentication and authorization
-2. Employee management
-3. Customer management
-4. Job card creation
-5. Task assignment and status updates
-6. Customer tracking portal
-7. Services and inventory
-8. Invoices and payments
-9. Notifications and dashboard summaries
+- Customer portal endpoints
+- Refresh tokens, logout, and `/api/auth/me`
+- Job status history and tracking timeline
+- Invoice line items
+- Notifications and dashboard summary endpoints
