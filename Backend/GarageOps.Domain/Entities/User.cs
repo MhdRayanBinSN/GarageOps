@@ -75,4 +75,28 @@ public class User : BaseEntity
         UserType = userType;
         EmployeeRole = employeeRole;
     }
+
+    public void ChangeEmployeeRole(EmployeeRole employeeRole)
+    {
+        if (UserType != UserType.WorkshopEmployee)
+        {
+            throw new InvalidOperationException(
+                "Only workshop employees can change employee roles.");
+        }
+
+        EmployeeRole = employeeRole;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

@@ -56,4 +56,10 @@ public class JobCard : BaseEntity
         VehicleModel = vehicleModel;
         VehicleYear = vehicleYear;
     }
+
+    public void UpdateStatus(JobStatus status)
+    {
+        Status = status;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

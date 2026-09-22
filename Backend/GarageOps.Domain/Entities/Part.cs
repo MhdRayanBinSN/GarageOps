@@ -35,4 +35,28 @@ public class Part : BaseEntity
         UnitPrice = unitPrice;
         StockQuantity = stockQuantity;
     }
+
+    public void UpdateDetails(string name, decimal unitPrice)
+    {
+        Name = name;
+        UnitPrice = unitPrice;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void AdjustStock(int quantityChange)
+    {
+        if (StockQuantity + quantityChange < 0)
+        {
+            throw new InvalidOperationException("Stock quantity cannot be negative.");
+        }
+
+        StockQuantity += quantityChange;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

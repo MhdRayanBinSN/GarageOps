@@ -39,4 +39,31 @@ public class Customer : BaseEntity
         Email = email;
         Address = address;
     }
+
+    public void UpdateDetails(
+        string firstName,
+        string lastName,
+        string phone,
+        string email,
+        string address)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Phone = phone;
+        Email = email;
+        Address = address;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

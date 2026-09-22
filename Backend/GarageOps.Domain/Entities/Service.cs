@@ -31,4 +31,18 @@ public class Service : BaseEntity
         Description = description;
         DefaultPrice = defaultPrice;
     }
+
+    public void UpdateDetails(string name, string description, decimal defaultPrice)
+    {
+        Name = name;
+        Description = description;
+        DefaultPrice = defaultPrice;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

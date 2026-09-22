@@ -39,4 +39,17 @@ public class JobTask : BaseEntity
         Description = description;
         EstimatedHours = estimatedHours;
     }
+
+    public void AssignTo(Guid userId)
+    {
+        AssignedToUserId = userId;
+        Status = JobTaskStatus.Assigned;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateStatus(JobTaskStatus status)
+    {
+        Status = status;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
