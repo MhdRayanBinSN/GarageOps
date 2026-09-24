@@ -66,13 +66,8 @@ export const LoginPage: React.FC = () => {
       {/* Main card */}
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-md bg-brand-red shadow-md shadow-brand-red/20 mb-4 animate-scale-up">
-            <Car className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="font-display text-2xl font-bold tracking-wider text-slate-900 uppercase">
-            GARAGE<span className="text-brand-red">OPS</span>
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">Workshop & Fleet Operations Management</p>
+          <img src="/logo.png" alt="GarageOps Logo" className="mx-auto w-22 h-20 mb-2" />
+          {/* <p className="mt-1 text-sm text-slate-500">Workshop & Fleet Operations Management</p> */}
         </div>
 
         <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm backdrop-blur-md">

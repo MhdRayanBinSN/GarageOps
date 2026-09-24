@@ -49,18 +49,15 @@ export const Sidebar: React.FC = () => {
     <aside className="w-56 bg-white border-r border-slate-200 flex flex-col h-screen fixed left-0 top-0 z-30 select-none">
       {/* Brand Header */}
       <div className="h-14 px-5 flex items-center gap-3 border-b border-slate-200 bg-white">
-        <div className="w-8 h-8 rounded-md bg-brand-red flex items-center justify-center text-white">
-          <Car className="w-5 h-5" />
-        </div>
-        <div>
-          <span className="font-display text-base font-bold tracking-wider text-slate-900 flex items-center gap-1">
-            GARAGE<span className="text-brand-red">OPS</span>
-          </span>
-          <span className="block text-[10px] uppercase tracking-widest text-slate-500 font-semibold -mt-1">
-            Workshop Suite
-          </span>
-        </div>
-      </div>
+  <div className="w-8 h-8 flex items-center justify-center">
+    <img src="logo_icon.png" alt="GarageOps" className="w-8 h-8 object-contain" />
+  </div>
+  <img
+    src="logo_text.png"
+    alt="GarageOps"
+    className="h-5 w-auto object-contain"
+  />
+</div>
 
       {/* Navigation Links */}
       <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
@@ -72,10 +69,9 @@ export const Sidebar: React.FC = () => {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 group ${
-                isActive
-                  ? 'bg-rose-50 text-brand-red font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 group ${isActive
+                ? 'bg-rose-50 text-brand-red font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`
             }
           >
