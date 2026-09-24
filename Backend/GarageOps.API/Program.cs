@@ -18,9 +18,57 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "GarageOps API",
+        Version = "v1",
+        Description = "Vehicle Workshop Management System – REST API",
+    });
 
-builder.Services.AddControllers();
+    // JWT Bearer auth button in Swagger UI
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter your JWT token. Example: eyJhbGci..."
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]
@@ -101,20 +149,42 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-if (app.Environment.IsDevelopment())
+// Fix for Swagger UI compatibility: Swashbuckle emits "openapi": "3.0.4" which Swagger UI regex rejects.
+app.Use(async (context, next) =>
 {
-    app.UseSwagger();
-
-    app.UseSwaggerUI(options =>
+    if (context.Request.Path.Value != null && context.Request.Path.Value.EndsWith("swagger.json", StringComparison.OrdinalIgnoreCase))
     {
-        options.SwaggerEndpoint(
-            "/swagger/v1/swagger.json",
-            "GarageOps API v1");
-    });
-}
+        var originalBodyStream = context.Response.Body;
+        using var responseBody = new MemoryStream();
+        context.Response.Body = responseBody;
 
-// Temporarily disable while testing HTTP
-// app.UseHttpsRedirection();
+        await next();
+
+        context.Response.Body = originalBodyStream;
+        responseBody.Seek(0, SeekOrigin.Begin);
+        var json = await new StreamReader(responseBody).ReadToEndAsync();
+        
+        // Rewrite 3.0.4 to 3.0.1 for Swagger UI regex compatibility
+        json = json.Replace("\"openapi\": \"3.0.4\"", "\"openapi\": \"3.0.1\"");
+
+        context.Response.ContentType = "application/json;charset=utf-8";
+        await context.Response.WriteAsync(json);
+        return;
+    }
+
+    await next();
+});
+
+// Enable Swagger in all environments
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "GarageOps API v1");
+    options.DocumentTitle = "GarageOps API – Swagger UI";
+    options.RoutePrefix = "swagger";
+});
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
