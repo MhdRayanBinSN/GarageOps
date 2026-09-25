@@ -5,10 +5,14 @@ public sealed record WorkshopRegistrationRequest(
     string WorkshopPhone,
     string WorkshopEmail,
     string WorkshopAddress,
-    string OwnerUsername,
-    string OwnerEmail,
-    string OwnerPassword);
+    string AdminUsername,
+    string AdminEmail,
+    string AdminPassword);
 
 public sealed record WorkshopRegistrationResponse(
     Guid WorkshopId,
-    Guid OwnerUserId);
+    Guid AdminUserId);
+
+public sealed record UpdateWorkshopRequest(string Name, string Phone, string Email, string Address);
+
+public sealed record WorkshopDetailsResponse(Guid Id, string Name, string Phone, string Email, string Address);

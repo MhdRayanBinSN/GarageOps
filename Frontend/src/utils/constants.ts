@@ -1,11 +1,8 @@
 import type { EmployeeRole, JobStatus, TaskStatus, InvoiceStatus, PaymentMethod } from '@/types'
 
 export const EMPLOYEE_ROLES: EmployeeRole[] = [
-  'Owner',
-  'Manager',
-  'ServiceAdvisor',
+  'FrontDesk',
   'Mechanic',
-  'Technician',
 ]
 
 export const JOB_STATUSES: JobStatus[] = [

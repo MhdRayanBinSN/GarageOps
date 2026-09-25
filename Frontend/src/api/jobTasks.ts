@@ -7,6 +7,7 @@ import type {
 } from '@/types'
 
 export const jobTasksApi = {
+  getMine: () => api.get<JobTaskResponse[]>('/api/job-tasks/mine').then((r) => r.data),
   getAll: (_workshopId: string, jobCardId: string) =>
     api.get<JobTaskResponse[]>(`/api/job-cards/${jobCardId}/tasks`).then((r) => r.data),
 
@@ -22,6 +23,6 @@ export const jobTasksApi = {
 
   updateStatus: (_workshopId: string, jobCardId: string, taskId: string, data: UpdateJobTaskStatusRequest) =>
     api
-      .put<JobTaskResponse>(`/api/job-cards/${jobCardId}/tasks/${taskId}/status`, data)
+      .patch<JobTaskResponse>(`/api/job-cards/${jobCardId}/tasks/${taskId}/status`, data)
       .then((r) => r.data),
 }

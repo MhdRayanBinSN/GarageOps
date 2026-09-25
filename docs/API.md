@@ -48,8 +48,8 @@ Validates credentials and returns a JWT access token with user routing info.
 {
   "userId": "guid",
   "workshopId": "guid",
-  "userType": "WorkshopOwner",
-  "employeeRole": "Owner",
+  "userType": "WorkshopAdmin",
+  "employeeRole": null,
   "accessToken": "jwt-token",
   "expiresAt": "2026-09-22T12:00:00Z"
 }
@@ -69,7 +69,7 @@ Authorization: Bearer {accessToken}
 
 ```text
 PlatformAdmin
-WorkshopOwner
+WorkshopAdmin
 WorkshopEmployee
 Customer
 ```
@@ -84,7 +84,7 @@ Customer
 
 > **No auth required.**
 
-Creates a workshop, its owner account, and the owner's workshop membership in one atomic operation.
+Creates a workshop and its Admin account in one atomic operation. Admin is a user type, not an employee role.
 
 **Request:**
 
@@ -94,9 +94,9 @@ Creates a workshop, its owner account, and the owner's workshop membership in on
   "workshopPhone": "0771234567",
   "workshopEmail": "cityauto@example.com",
   "workshopAddress": "Main Street",
-  "ownerUsername": "cityadmin",
-  "ownerEmail": "admin@cityauto.example.com",
-  "ownerPassword": "ChangeMe123!"
+  "adminUsername": "cityadmin",
+  "adminEmail": "admin@cityauto.example.com",
+  "adminPassword": "ChangeMe123!"
 }
 ```
 
@@ -105,7 +105,7 @@ Creates a workshop, its owner account, and the owner's workshop membership in on
 ```json
 {
   "workshopId": "guid",
-  "ownerUserId": "guid"
+  "adminUserId": "guid"
 }
 ```
 
@@ -113,7 +113,7 @@ Creates a workshop, its owner account, and the owner's workshop membership in on
 
 ## Employees
 
-> **Auth required.** Roles: `Owner`, `Manager`.
+> **Auth required.** Admin manages employees and roles. Front Desk may read the employee list for assignment workflows.
 > The authenticated user's `workshopId` claim must match the `{workshopId}` path parameter.
 
 ### Endpoint Summary
@@ -168,7 +168,7 @@ Creates a workshop, its owner account, and the owner's workshop membership in on
 
 ```json
 {
-  "employeeRole": "Manager"
+  "employeeRole": "FrontDesk"
 }
 ```
 
@@ -185,18 +185,17 @@ No request body. Returns `204 No Content` on success, `404 Not Found` if not fou
 ### `employeeRole` values
 
 ```text
-Owner
-Manager
-ServiceAdvisor
+FrontDesk
 Mechanic
-Technician
 ```
+
+Only `FrontDesk` and `Mechanic` may be assigned to new or existing employees. Legacy stored roles remain readable: `Manager` receives Front Desk capabilities, and `Technician` receives Mechanic capabilities. `Owner` and `InventoryStaff` are legacy-only enum values.
 
 ---
 
 ## Customers
 
-> **Auth required.** Roles: `Owner`, `Manager`, `ServiceAdvisor`.
+> **Auth required.** Admin and Front Desk (`Manager` legacy accounts map to Front Desk).
 > The authenticated user's `workshopId` claim must match the `{workshopId}` path parameter.
 
 ### Endpoint Summary
@@ -266,11 +265,36 @@ Technician
 
 No request body. Returns `204 No Content` on success, `404 Not Found` if not found.
 
+### Create Customer Portal Access
+
+`POST /api/workshops/{workshopId}/customers/{customerId}/portal-access`
+
+Admin or Front Desk provisions a customer login. Provide a unique username and temporary password of at least eight characters. Customer deactivation also deactivates the linked login.
+
+```json
+{
+  "username": "john.customer",
+  "password": "temporary-password"
+}
+```
+
+Customer logins use `UserType: Customer` with no employee role. They can call only these own-record endpoints:
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/api/customer-portal/me` | Read linked customer profile |
+| `GET` | `/api/customer-portal/vehicles` | Read vehicles derived from the customer's job cards |
+| `GET` | `/api/customer-portal/jobs` | Read own job progress and tasks |
+| `GET` | `/api/customer-portal/invoices` | Read own invoices |
+| `GET` | `/api/customer-portal/payments` | Read own payments |
+
+Every query scopes through the unique `Customer.PortalUserId` link; customer tokens cannot access workshop-wide customer/job/invoice endpoints.
+
 ---
 
 ## Job Cards
 
-> **Auth required.** Roles: `Owner`, `Manager`, `ServiceAdvisor`.
+> **Auth required.** Admin and Front Desk (`Manager` legacy accounts map to Front Desk).
 > The authenticated user's `workshopId` claim must match the `{workshopId}` path parameter.
 
 ### Endpoint Summary
@@ -367,7 +391,7 @@ Cancelled
 
 ## Job Tasks
 
-> **Auth required.** Roles: `Owner`, `Manager`, `ServiceAdvisor`, `Mechanic`, `Technician`.
+> **Auth required.** Admin, Front Desk, and Mechanic. Mechanics only receive tasks assigned to them; `Technician` legacy accounts map to Mechanic.
 > The token must carry a valid `workshop_id` claim.
 
 ### Endpoint Summary
@@ -462,7 +486,7 @@ Cancelled
 
 ## Services Catalog
 
-> **Auth required.** Roles: `Owner`, `Manager`, `ServiceAdvisor`.
+> **Auth required.** Admin and Front Desk (`Manager` legacy accounts map to Front Desk).
 > The authenticated user's `workshopId` claim must match the `{workshopId}` path parameter.
 
 ### Endpoint Summary
@@ -525,7 +549,7 @@ No request body. Returns `204 No Content` on success, `404 Not Found` if not fou
 
 ## Parts & Inventory
 
-> **Auth required.** Roles: `Owner`, `Manager`, `ServiceAdvisor`.
+> **Auth required.** Admin and Front Desk (`Manager` legacy accounts map to Front Desk).
 > The authenticated user's `workshopId` claim must match the `{workshopId}` path parameter.
 
 ### Endpoint Summary
@@ -616,7 +640,7 @@ No request body. Returns `204 No Content` on success, `404 Not Found` if not fou
 
 ## Invoices & Payments
 
-> **Auth required.** Roles: `Owner`, `Manager`, `ServiceAdvisor`.
+> **Auth required.** Admin and Front Desk (`Manager` legacy accounts map to Front Desk).
 > The token must carry a valid `workshop_id` claim matching the resource's workshop.
 
 ### Endpoint Summary

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using GarageOps.Application.Authentication;
+using GarageOps.Application.Authorization;
 using GarageOps.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -37,17 +38,17 @@ public sealed class JwtTokenService : ITokenService
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Username),
-            new("user_type", user.UserType.ToString())
+            new("user_type", user.UserType.ToString()),
+            new("employee_role", user.EmployeeRole?.ToString() ?? ""),
+            new(ClaimTypes.Role, RolePermissions.CanonicalRole(user.UserType, user.EmployeeRole))
         };
+
+        claims.AddRange(RolePermissions.For(user.UserType, user.EmployeeRole)
+            .Select(permission => new Claim("permission", permission)));
 
         if (user.WorkshopId is not null)
         {
             claims.Add(new Claim("workshop_id", user.WorkshopId.Value.ToString()));
-        }
-
-        if (user.EmployeeRole is not null)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, user.EmployeeRole.Value.ToString()));
         }
 
         var credentials = new SigningCredentials(

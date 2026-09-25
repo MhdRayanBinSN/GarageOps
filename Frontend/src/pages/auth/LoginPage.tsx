@@ -9,6 +9,7 @@ import { showToast } from '@/store/toastStore'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Car, Lock, User, ArrowRight, ShieldCheck } from 'lucide-react'
+import { getHomePath } from '@/utils/permissions'
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -16,6 +17,14 @@ const loginSchema = z.object({
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
+
+const demoCredentials = [
+  { role: 'Admin', username: 'cityadmin2' },
+  { role: 'Front Desk', username: 'advisor1' },
+  { role: 'Mechanic', username: 'mechanic1' },
+  { role: 'Customer', username: 'customer1' },
+] as const
+const demoPassword = 'ChangeMe123!'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -41,7 +50,7 @@ export const LoginPage: React.FC = () => {
       const res = await authApi.login(data as any)
       setAuth(res)
       showToast('Successfully signed in!', 'success')
-      navigate('/dashboard')
+      navigate(getHomePath(res.userType, res.employeeRole))
     } catch (err: any) {
       const message =
         err.response?.data?.message ||
@@ -111,14 +120,19 @@ export const LoginPage: React.FC = () => {
               <ShieldCheck className="w-3.5 h-3.5 text-slate-500" /> Demo Credentials:
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('cityadmin2', 'ChangeMe123!')}
-                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-300 transition-colors"
-              >
-                Owner: <span className="font-mono text-slate-500">cityadmin2</span>
-              </button>
+              {demoCredentials.map(({ role, username }) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => fillQuickCredentials(username, demoPassword)}
+                  className="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 rounded-md border border-slate-200 transition-colors"
+                  title={`Fill ${role} demo login`}
+                >
+                  {role}: <span className="font-mono text-slate-500">{username}</span>
+                </button>
+              ))}
             </div>
+            <p className="text-[11px] text-slate-500">Demo password: <span className="font-mono">{demoPassword}</span></p>
           </div>
         </div>
 

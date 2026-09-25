@@ -10,6 +10,11 @@ public interface IJobTaskRepository
         Guid jobCardId,
         CancellationToken cancellationToken);
 
+    Task<List<JobTask>> GetAssignedToUserAsync(
+        Guid workshopId,
+        Guid userId,
+        CancellationToken cancellationToken);
+
     Task<JobTask?> GetByIdAsync(
         Guid taskId,
         Guid jobCardId,

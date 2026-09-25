@@ -1,12 +1,13 @@
 using System.Security.Claims;
 using GarageOps.Application.Billing;
+using GarageOps.Application.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GarageOps.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Owner,Manager,ServiceAdvisor")]
+[Authorize(Policy = Permissions.BillingManage)]
 [Route("api")]
 public sealed class BillingController : ControllerBase
 {

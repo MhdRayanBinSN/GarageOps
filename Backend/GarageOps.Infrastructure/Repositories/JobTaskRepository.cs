@@ -26,7 +26,23 @@ public sealed class JobTaskRepository : IJobTaskRepository
         return dbContext.JobTasks
             .AsNoTracking()
             .Where(task => task.JobCardId == jobCardId)
+            .Include(task => task.JobCard)
             .OrderBy(task => task.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<List<JobTask>> GetAssignedToUserAsync(
+        Guid workshopId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return dbContext.JobTasks
+            .AsNoTracking()
+            .Where(task => task.AssignedToUserId == userId
+                && task.JobCard.WorkshopId == workshopId)
+            .Include(task => task.JobCard)
+            .OrderBy(task => task.Status)
+            .ThenByDescending(task => task.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 

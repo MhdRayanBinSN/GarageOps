@@ -14,4 +14,6 @@ public interface ICustomerRepository
         Guid customerId,
         Guid workshopId,
         CancellationToken cancellationToken);
+
+    Task<Customer?> GetByPortalUserIdAsync(Guid userId, CancellationToken cancellationToken);
 }

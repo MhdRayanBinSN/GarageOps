@@ -25,6 +25,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type = 'generi
     else if (status in INVOICE_STATUS_COLORS) colorClass = INVOICE_STATUS_COLORS[status as InvoiceStatus]
   }
 
+  if (type === 'generic') {
+    if (status === 'Approved' || status === 'Issued') colorClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+    if (status === 'Rejected') colorClass = 'bg-rose-50 text-rose-700 border border-rose-200'
+    if (status === 'Pending') colorClass = 'bg-amber-50 text-amber-700 border border-amber-200'
+  }
+
   // Format camelCase to readable words e.g. AwaitingApproval -> Awaiting Approval
   const formattedText = status.replace(/([A-Z])/g, ' $1').trim()
 

@@ -13,9 +13,8 @@ export const useAuth = () => {
     isAuthenticated,
   } = useAuthStore()
 
-  const isOwner = userType === 'WorkshopOwner' || employeeRole === 'Owner'
-  const isManager = isOwner || employeeRole === 'Manager'
-  const isAdvisor = isManager || employeeRole === 'ServiceAdvisor'
+  const isAdmin = userType === 'WorkshopAdmin'
+  const isFrontDesk = isAdmin || employeeRole === 'FrontDesk' || employeeRole === 'Manager'
 
   return {
     userId,
@@ -27,8 +26,7 @@ export const useAuth = () => {
     setAuth,
     clearAuth,
     isAuthenticated: isAuthenticated(),
-    isOwner,
-    isManager,
-    isAdvisor,
+    isAdmin,
+    isFrontDesk,
   }
 }

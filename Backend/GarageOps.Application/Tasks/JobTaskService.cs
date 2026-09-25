@@ -1,20 +1,25 @@
 using GarageOps.Application.Abstractions.Persistence;
 using GarageOps.Domain.Entities;
+using GarageOps.Domain.Enums;
+using JobTaskStatus = GarageOps.Domain.Enums.TaskStatus;
 
 namespace GarageOps.Application.Tasks;
 
 public sealed class JobTaskService : IJobTaskService
 {
     private readonly IJobCardRepository jobCardRepository;
+    private readonly IUserRepository userRepository;
     private readonly IJobTaskRepository taskRepository;
     private readonly IUnitOfWork unitOfWork;
 
     public JobTaskService(
         IJobCardRepository jobCardRepository,
+        IUserRepository userRepository,
         IJobTaskRepository taskRepository,
         IUnitOfWork unitOfWork)
     {
         this.jobCardRepository = jobCardRepository;
+        this.userRepository = userRepository;
         this.taskRepository = taskRepository;
         this.unitOfWork = unitOfWork;
     }
@@ -69,6 +74,18 @@ public sealed class JobTaskService : IJobTaskService
         return tasks.Select(Map).ToArray();
     }
 
+    public async Task<IReadOnlyList<JobTaskResponse>> GetAssignedToUserAsync(
+        Guid workshopId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var tasks = await taskRepository.GetAssignedToUserAsync(
+            workshopId,
+            userId,
+            cancellationToken);
+        return tasks.Select(Map).ToArray();
+    }
+
     public Task<JobTaskResponse?> AssignAsync(
         Guid workshopId,
         Guid jobCardId,
@@ -76,11 +93,24 @@ public sealed class JobTaskService : IJobTaskService
         AssignJobTaskRequest request,
         CancellationToken cancellationToken)
     {
-        return UpdateTaskAsync(
+        return AssignTaskAsync(workshopId, jobCardId, taskId, request.UserId, cancellationToken);
+    }
+
+    private async Task<JobTaskResponse?> AssignTaskAsync(
+        Guid workshopId, Guid jobCardId, Guid taskId, Guid userId, CancellationToken cancellationToken)
+    {
+        var employee = await userRepository.GetEmployeeByIdAsync(userId, workshopId, cancellationToken);
+        if (employee is null || !employee.IsActive
+            || employee.EmployeeRole is not EmployeeRole.Mechanic and not EmployeeRole.Technician)
+        {
+            return null;
+        }
+
+        return await UpdateTaskAsync(
             workshopId,
             jobCardId,
             taskId,
-            task => task.AssignTo(request.UserId),
+            task => task.AssignTo(userId),
             cancellationToken);
     }
 
@@ -95,7 +125,20 @@ public sealed class JobTaskService : IJobTaskService
             workshopId,
             jobCardId,
             taskId,
-            task => task.UpdateStatus(request.Status),
+            task =>
+            {
+                if (request.Status == JobTaskStatus.Completed
+                    && request.ActualHours.HasValue
+                    && request.ActualHours.Value > 0
+                    && !string.IsNullOrWhiteSpace(request.WorkPerformed))
+                {
+                    task.RecordWork(request.ActualHours.Value, request.WorkPerformed!);
+                }
+                else
+                {
+                    task.UpdateStatus(request.Status);
+                }
+            },
             cancellationToken);
     }
 
@@ -143,6 +186,12 @@ public sealed class JobTaskService : IJobTaskService
             task.EstimatedHours,
             task.ActualHours,
             task.CreatedAt,
-            task.UpdatedAt);
+            task.UpdatedAt,
+            task.JobCard?.Title,
+            task.JobCard?.VehicleRegistrationNumber,
+            task.JobCard?.VehicleMake,
+            task.JobCard?.VehicleModel,
+            task.JobCard?.VehicleYear,
+            task.WorkPerformed);
     }
 }

@@ -29,4 +29,18 @@ public sealed class GarageOpsDbContext : DbContext
     public DbSet<Invoice> Invoices => Set<Invoice>();
 
     public DbSet<Payment> Payments => Set<Payment>();
+
+    public DbSet<JobPartRequest> JobPartRequests => Set<JobPartRequest>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Customer>()
+            .HasIndex(customer => customer.PortalUserId)
+            .IsUnique();
+        modelBuilder.Entity<Customer>()
+            .HasOne(customer => customer.PortalUser)
+            .WithMany()
+            .HasForeignKey(customer => customer.PortalUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
 }

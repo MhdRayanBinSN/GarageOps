@@ -29,10 +29,9 @@ public sealed class EmployeeService : IEmployeeService
         CreateEmployeeRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.EmployeeRole == EmployeeRole.Owner)
+        if (request.EmployeeRole is not EmployeeRole.FrontDesk and not EmployeeRole.Mechanic)
         {
-            throw new ArgumentException(
-                "The workshop owner is created during workshop registration.",
+            throw new ArgumentException("Employees can only be Front Desk or Mechanic.",
                 nameof(request));
         }
 
@@ -73,10 +72,9 @@ public sealed class EmployeeService : IEmployeeService
         UpdateEmployeeRoleRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.EmployeeRole == EmployeeRole.Owner)
+        if (request.EmployeeRole is not EmployeeRole.FrontDesk and not EmployeeRole.Mechanic)
         {
-            throw new ArgumentException(
-                "The owner role cannot be assigned to an employee.",
+            throw new ArgumentException("Employees can only be Front Desk or Mechanic.",
                 nameof(request));
         }
 
@@ -91,6 +89,7 @@ public sealed class EmployeeService : IEmployeeService
         }
 
         employee.ChangeEmployeeRole(request.EmployeeRole);
+        await membershipRepository.SetRoleAsync(workshopId, employeeId, request.EmployeeRole, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Map(employee);
@@ -120,6 +119,8 @@ public sealed class EmployeeService : IEmployeeService
         {
             employee.Deactivate();
         }
+
+        await membershipRepository.SetActiveAsync(workshopId, employeeId, isActive, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return true;

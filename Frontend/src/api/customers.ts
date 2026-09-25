@@ -16,4 +16,7 @@ export const customersApi = {
 
   delete: (workshopId: string, customerId: string) =>
     api.delete<void>(`/api/workshops/${workshopId}/customers/${customerId}`).then((r) => r.data),
+
+  createPortalAccess: (workshopId: string, customerId: string, data: { username: string; password: string }) =>
+    api.post(`/api/workshops/${workshopId}/customers/${customerId}/portal-access`, data).then((r) => r.data),
 }

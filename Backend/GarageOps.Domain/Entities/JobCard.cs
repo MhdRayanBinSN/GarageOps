@@ -62,4 +62,16 @@ public class JobCard : BaseEntity
         Status = status;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void UpdateDetails(string title, string description, string registrationNumber,
+        string vehicleMake, string vehicleModel, int vehicleYear)
+    {
+        Title = title.Trim();
+        Description = description.Trim();
+        VehicleRegistrationNumber = registrationNumber.Trim();
+        VehicleMake = vehicleMake.Trim();
+        VehicleModel = vehicleModel.Trim();
+        VehicleYear = vehicleYear;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

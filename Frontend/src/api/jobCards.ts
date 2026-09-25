@@ -13,4 +13,13 @@ export const jobCardsApi = {
 
   updateStatus: (workshopId: string, jobCardId: string, data: UpdateJobStatusRequest) =>
     api.put<JobCardResponse>(`/api/workshops/${workshopId}/job-cards/${jobCardId}/status`, data).then((r) => r.data),
+
+  updateDetails: (workshopId: string, jobCardId: string, data: {
+    title: string
+    description: string
+    vehicleRegistrationNumber: string
+    vehicleMake: string
+    vehicleModel: string
+    vehicleYear: number
+  }) => api.put<JobCardResponse>(`/api/workshops/${workshopId}/job-cards/${jobCardId}/details`, data).then((r) => r.data),
 }

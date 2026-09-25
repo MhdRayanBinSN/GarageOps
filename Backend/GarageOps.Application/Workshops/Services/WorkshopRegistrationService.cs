@@ -10,20 +10,17 @@ public sealed class WorkshopRegistrationService : IWorkshopRegistrationService
 {
     private readonly IWorkshopRepository workshopRepository;
     private readonly IUserRepository userRepository;
-    private readonly IWorkshopMembershipRepository membershipRepository;
     private readonly IUnitOfWork unitOfWork;
     private readonly IPasswordHasher passwordHasher;
 
     public WorkshopRegistrationService(
         IWorkshopRepository workshopRepository,
         IUserRepository userRepository,
-        IWorkshopMembershipRepository membershipRepository,
         IUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher)
     {
         this.workshopRepository = workshopRepository;
         this.userRepository = userRepository;
-        this.membershipRepository = membershipRepository;
         this.unitOfWork = unitOfWork;
         this.passwordHasher = passwordHasher;
     }
@@ -38,24 +35,18 @@ public sealed class WorkshopRegistrationService : IWorkshopRegistrationService
             request.WorkshopEmail,
             request.WorkshopAddress);
 
-        var owner = new User(
+        var admin = new User(
             workshop.Id,
-            request.OwnerUsername,
-            request.OwnerEmail,
-            passwordHasher.Hash(request.OwnerPassword),
-            UserType.WorkshopOwner,
-            EmployeeRole.Owner);
-
-        var membership = new WorkshopMembership(
-            workshop.Id,
-            owner.Id,
-            EmployeeRole.Owner);
+            request.AdminUsername,
+            request.AdminEmail,
+            passwordHasher.Hash(request.AdminPassword),
+            UserType.WorkshopAdmin,
+            null);
 
         await workshopRepository.AddAsync(workshop, cancellationToken);
-        await userRepository.AddAsync(owner, cancellationToken);
-        await membershipRepository.AddAsync(membership, cancellationToken);
+        await userRepository.AddAsync(admin, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new WorkshopRegistrationResponse(workshop.Id, owner.Id);
+        return new WorkshopRegistrationResponse(workshop.Id, admin.Id);
     }
 }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using GarageOps.Application.Authorization;
 using GarageOps.Application.Employees;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GarageOps.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Owner,Manager")]
+[Authorize(Policy = Permissions.EmployeesView)]
 [Route("api/workshops/{workshopId:guid}/employees")]
 public sealed class EmployeesController : ControllerBase
 {
@@ -18,6 +19,7 @@ public sealed class EmployeesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.EmployeesManage)]
     [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<EmployeeResponse>> Create(
         Guid workshopId,
@@ -29,6 +31,10 @@ public sealed class EmployeesController : ControllerBase
             return Forbid();
         }
 
+        if (request.EmployeeRole is not GarageOps.Domain.Enums.EmployeeRole.FrontDesk
+            and not GarageOps.Domain.Enums.EmployeeRole.Mechanic)
+            return BadRequest("New employees can only be Front Desk or Mechanic.");
+
         var employee = await employeeService.CreateAsync(
             workshopId,
             request,
@@ -38,6 +44,7 @@ public sealed class EmployeesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.EmployeesView)]
     [ProducesResponseType(typeof(IReadOnlyList<EmployeeResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<EmployeeResponse>>> GetAll(
         Guid workshopId,
@@ -54,6 +61,7 @@ public sealed class EmployeesController : ControllerBase
     }
 
     [HttpPut("{employeeId:guid}/role")]
+    [Authorize(Policy = Permissions.EmployeesManage)]
     public async Task<ActionResult<EmployeeResponse>> UpdateRole(
         Guid workshopId,
         Guid employeeId,
@@ -65,6 +73,10 @@ public sealed class EmployeesController : ControllerBase
             return Forbid();
         }
 
+        if (request.EmployeeRole is not GarageOps.Domain.Enums.EmployeeRole.FrontDesk
+            and not GarageOps.Domain.Enums.EmployeeRole.Mechanic)
+            return BadRequest("Employees can only be Front Desk or Mechanic.");
+
         var employee = await employeeService.UpdateRoleAsync(
             workshopId,
             employeeId,
@@ -75,6 +87,7 @@ public sealed class EmployeesController : ControllerBase
     }
 
     [HttpPatch("{employeeId:guid}/activate")]
+    [Authorize(Policy = Permissions.EmployeesManage)]
     public Task<ActionResult> Activate(
         Guid workshopId,
         Guid employeeId,
@@ -84,6 +97,7 @@ public sealed class EmployeesController : ControllerBase
     }
 
     [HttpPatch("{employeeId:guid}/deactivate")]
+    [Authorize(Policy = Permissions.EmployeesManage)]
     public Task<ActionResult> Deactivate(
         Guid workshopId,
         Guid employeeId,

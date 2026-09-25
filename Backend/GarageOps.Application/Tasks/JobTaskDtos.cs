@@ -10,7 +10,7 @@ public sealed record CreateJobTaskRequest(
 
 public sealed record AssignJobTaskRequest(Guid UserId);
 
-public sealed record UpdateJobTaskStatusRequest(JobTaskStatus Status);
+public sealed record UpdateJobTaskStatusRequest(JobTaskStatus Status, decimal? ActualHours = null, string? WorkPerformed = null);
 
 public sealed record JobTaskResponse(
     Guid Id,
@@ -22,4 +22,10 @@ public sealed record JobTaskResponse(
     decimal? EstimatedHours,
     decimal? ActualHours,
     DateTime CreatedAt,
-    DateTime? UpdatedAt);
+    DateTime? UpdatedAt,
+    string? JobTitle = null,
+    string? VehicleRegistrationNumber = null,
+    string? VehicleMake = null,
+    string? VehicleModel = null,
+    int? VehicleYear = null,
+    string? WorkPerformed = null);

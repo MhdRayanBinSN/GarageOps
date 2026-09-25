@@ -36,9 +36,12 @@ public sealed class CustomerRepository : ICustomerRepository
         Guid workshopId,
         CancellationToken cancellationToken)
     {
-        return dbContext.Customers.SingleOrDefaultAsync(
+        return dbContext.Customers.Include(customer => customer.PortalUser).SingleOrDefaultAsync(
             customer => customer.Id == customerId
                 && customer.WorkshopId == workshopId,
             cancellationToken);
     }
+
+    public Task<Customer?> GetByPortalUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
+        dbContext.Customers.SingleOrDefaultAsync(customer => customer.PortalUserId == userId, cancellationToken);
 }

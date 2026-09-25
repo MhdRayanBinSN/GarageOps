@@ -2,9 +2,104 @@
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserType = 'PlatformAdmin' | 'WorkshopOwner' | 'WorkshopEmployee' | 'Customer'
+export type UserType = 'PlatformAdmin' | 'WorkshopAdmin' | 'WorkshopEmployee' | 'Customer'
 
-export type EmployeeRole = 'Owner' | 'Manager' | 'ServiceAdvisor' | 'Mechanic' | 'Technician'
+// Manager/Technician/InventoryStaff/Owner are accepted only for existing stored accounts.
+export type EmployeeRole = 'Owner' | 'Manager' | 'FrontDesk' | 'Mechanic' | 'Technician' | 'InventoryStaff'
+export type AccessRole = 'Admin' | 'FrontDesk' | 'Mechanic' | 'Customer' | 'InventoryStaff'
+
+export interface CustomerPortalProfile {
+  customerId: string
+  firstName: string
+  lastName: string
+  phone: string
+  email: string
+  address: string
+  workshopName: string
+}
+
+export interface CustomerPortalTask {
+  id: string
+  title: string
+  status: TaskStatus
+  estimatedHours: number | null
+  actualHours: number | null
+  workPerformed: string | null
+}
+
+export interface CustomerPortalJob {
+  id: string
+  title: string
+  description: string
+  status: JobStatus
+  createdAt: string
+  vehicleRegistrationNumber: string
+  vehicleMake: string
+  vehicleModel: string
+  vehicleYear: number
+  tasks: CustomerPortalTask[]
+  parts: { name: string; quantity: number }[]
+}
+
+export interface CustomerPortalInvoice {
+  id: string
+  jobCardId: string
+  invoiceNumber: string
+  subtotal: number
+  tax: number
+  total: number
+  status: InvoiceStatus
+  createdAt: string
+  payments: { amount: number; method: PaymentMethod; paidAt: string }[]
+}
+
+export interface CustomerPortalVehicle {
+  registrationNumber: string
+  make: string
+  model: string
+  year: number
+  lastServicedAt: string
+}
+
+export interface CustomerPortalPayment {
+  id: string
+  invoiceId: string
+  invoiceNumber: string
+  amount: number
+  method: PaymentMethod
+  paidAt: string
+}
+
+export type PartRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Issued'
+
+export interface CreatePartRequestRequest {
+  jobTaskId: string
+  partId: string
+  quantity: number
+  notes?: string
+}
+
+export interface PartRequestResponse {
+  id: string
+  workshopId: string
+  jobCardId: string
+  jobTaskId: string
+  partId: string
+  partName: string
+  partNumber: string
+  quantity: number
+  status: PartRequestStatus
+  requestedByUserId: string
+  requestedByName: string
+  processedByUserId: string | null
+  processedByName: string | null
+  notes: string
+  jobTitle: string
+  vehicleRegistrationNumber: string
+  taskTitle: string
+  createdAt: string
+  processedAt: string | null
+}
 
 export type JobStatus =
   | 'Draft'
@@ -47,14 +142,14 @@ export interface WorkshopRegistrationRequest {
   workshopPhone: string
   workshopEmail: string
   workshopAddress: string
-  ownerUsername: string
-  ownerEmail: string
-  ownerPassword: string
+  adminUsername: string
+  adminEmail: string
+  adminPassword: string
 }
 
 export interface WorkshopRegistrationResponse {
   workshopId: string
-  ownerUserId: string
+  adminUserId: string
 }
 
 // ─── Employees ────────────────────────────────────────────────────────────────
@@ -106,6 +201,7 @@ export interface CustomerResponse {
   email: string
   address: string
   isActive: boolean
+  hasPortalAccess: boolean
 }
 
 // ─── Job Cards ────────────────────────────────────────────────────────────────
@@ -154,6 +250,8 @@ export interface AssignJobTaskRequest {
 
 export interface UpdateJobTaskStatusRequest {
   status: TaskStatus
+  actualHours?: number
+  workPerformed?: string
 }
 
 export interface JobTaskResponse {
@@ -167,6 +265,12 @@ export interface JobTaskResponse {
   actualHours: number | null
   createdAt: string
   updatedAt: string | null
+  jobTitle?: string | null
+  vehicleRegistrationNumber?: string | null
+  vehicleMake?: string | null
+  vehicleModel?: string | null
+  vehicleYear?: number | null
+  workPerformed?: string | null
 }
 
 // ─── Services ─────────────────────────────────────────────────────────────────
@@ -216,6 +320,14 @@ export interface PartResponse {
   name: string
   partNumber: string
   unitPrice: number
+  stockQuantity: number
+  isActive: boolean
+}
+
+export interface InventoryAvailabilityResponse {
+  id: string
+  name: string
+  partNumber: string
   stockQuantity: number
   isActive: boolean
 }

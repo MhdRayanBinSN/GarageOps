@@ -65,6 +65,7 @@ export const JobCardDetailPage: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   // Fetch job card
   const { data: jobCard, isLoading: jobLoading } = useQuery({
@@ -106,6 +107,35 @@ export const JobCardDetailPage: React.FC = () => {
     onError: (err: any) => {
       showToast(err.response?.data?.message || 'Failed to update job status', 'error')
     },
+  })
+
+  const detailsSchema = z.object({
+    title: z.string().min(2, 'Job title is required'),
+    description: z.string().min(2, 'Description is required'),
+    vehicleRegistrationNumber: z.string().min(1, 'Registration is required'),
+    vehicleMake: z.string().min(1, 'Make is required'),
+    vehicleModel: z.string().min(1, 'Model is required'),
+    vehicleYear: z.coerce.number().int().min(1886).max(new Date().getFullYear() + 1),
+  })
+  type DetailsFormValues = z.input<typeof detailsSchema>
+  const {
+    register: registerDetails,
+    handleSubmit: handleSubmitDetails,
+    reset: resetDetails,
+    formState: { errors: detailsErrors },
+  } = useForm<DetailsFormValues>({ resolver: zodResolver(detailsSchema) })
+
+  const updateDetailsMutation = useMutation({
+    mutationFn: (data: DetailsFormValues) => jobCardsApi.updateDetails(
+      workshopId!, jobCardId!, detailsSchema.parse(data) as Parameters<typeof jobCardsApi.updateDetails>[2],
+    ),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['jobCard', workshopId, jobCardId], updated)
+      queryClient.invalidateQueries({ queryKey: ['jobCards', workshopId] })
+      showToast('Job and vehicle details updated', 'success')
+      setIsDetailsModalOpen(false)
+    },
+    onError: (err: any) => showToast(err.response?.data?.message || 'Failed to update job details', 'error'),
   })
 
   const {
@@ -233,6 +263,12 @@ export const JobCardDetailPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Button variant="secondary" size="sm" onClick={() => {
+            resetDetails({ title: jobCard.title, description: jobCard.description, vehicleRegistrationNumber: jobCard.vehicleRegistrationNumber, vehicleMake: jobCard.vehicleMake, vehicleModel: jobCard.vehicleModel, vehicleYear: jobCard.vehicleYear })
+            setIsDetailsModalOpen(true)
+          }}>
+            Edit details
+          </Button>
           <Button
             variant="sand"
             size="sm"
@@ -440,6 +476,28 @@ export const JobCardDetailPage: React.FC = () => {
       </div>
 
       {/* Add Task Modal */}
+      <Modal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} title="Edit job and vehicle" size="md">
+        <form onSubmit={handleSubmitDetails((values) => updateDetailsMutation.mutate(values))} className="space-y-4">
+          <Input label="Job title" error={detailsErrors.title?.message} {...registerDetails('title')} />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Registration" error={detailsErrors.vehicleRegistrationNumber?.message} {...registerDetails('vehicleRegistrationNumber')} />
+            <Input label="Make" error={detailsErrors.vehicleMake?.message} {...registerDetails('vehicleMake')} />
+            <Input label="Model" error={detailsErrors.vehicleModel?.message} {...registerDetails('vehicleModel')} />
+            <Input label="Year" type="number" error={detailsErrors.vehicleYear?.message} {...registerDetails('vehicleYear')} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-700">Description / diagnostic findings</label>
+            <textarea rows={3} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sand focus:ring-1 focus:ring-sand/40" {...registerDetails('description')} />
+            {detailsErrors.description && <p className="mt-1 text-xs text-brand-red">{detailsErrors.description.message}</p>}
+          </div>
+          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setIsDetailsModalOpen(false)}>Cancel</Button>
+            <Button type="submit" isLoading={updateDetailsMutation.isPending}>Save changes</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Add Task Modal */}
       <Modal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
@@ -507,9 +565,9 @@ export const JobCardDetailPage: React.FC = () => {
       >
         <div className="space-y-4">
           <Select
-            label="Select Technician or Mechanic"
+            label="Select Mechanic"
             placeholder="Choose staff member..."
-            options={employees.map((e) => ({
+            options={employees.filter((e) => e.isActive && (e.employeeRole === 'Mechanic' || e.employeeRole === 'Technician')).map((e) => ({
               value: e.id,
               label: `${e.username} (${e.employeeRole})`,
             }))}

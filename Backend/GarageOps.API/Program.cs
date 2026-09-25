@@ -6,6 +6,9 @@ using GarageOps.Application.Jobs;
 using GarageOps.Application.Tasks;
 using GarageOps.Application.Catalog;
 using GarageOps.Application.Billing;
+using GarageOps.Application.Parts;
+using GarageOps.Application.Authorization;
+using GarageOps.API.Authorization;
 using GarageOps.Application.Workshops.Services;
 using GarageOps.Infrastructure.Persistence;
 using GarageOps.Infrastructure.Authentication;
@@ -92,9 +95,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var username = context.Principal?.Identity?.Name;
+                if (!Guid.TryParse(userIdClaim, out var userId) || string.IsNullOrWhiteSpace(username))
+                {
+                    context.Fail("The token does not identify a valid workshop user.");
+                    return;
+                }
+
+                var users = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+                var user = await users.GetByUsernameAsync(username, context.HttpContext.RequestAborted);
+                var tokenWorkshop = context.Principal?.FindFirst("workshop_id")?.Value;
+                var tokenRole = context.Principal?.FindFirst("employee_role")?.Value;
+                var tokenUserType = context.Principal?.FindFirst("user_type")?.Value;
+                if (user is null || !user.IsActive || user.Id != userId
+                    || user.WorkshopId?.ToString() != tokenWorkshop
+                    || (user.EmployeeRole?.ToString() ?? "") != tokenRole
+                    || user.UserType.ToString() != tokenUserType)
+                {
+                    context.Fail("This account is inactive or its access has changed. Sign in again.");
+                }
+            }
+        };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddGarageOpsPolicies();
 
 builder.Services.AddDbContext<GarageOpsDbContext>(options =>
     options.UseSqlite(
@@ -119,6 +148,8 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 // Customers
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ICustomerPortalService, CustomerPortalService>();
+builder.Services.AddScoped<ICustomerPortalReadRepository, CustomerPortalReadRepository>();
 
 // Jobs
 builder.Services.AddScoped<IJobCardRepository, JobCardRepository>();
@@ -136,6 +167,8 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 // Billing
 builder.Services.AddScoped<IBillingRepository, BillingRepository>();
 builder.Services.AddScoped<IBillingService, BillingService>();
+builder.Services.AddScoped<IJobPartRequestRepository, JobPartRequestRepository>();
+builder.Services.AddScoped<IPartRequestService, PartRequestService>();
 
 
 var app = builder.Build();

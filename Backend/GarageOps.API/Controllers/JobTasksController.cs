@@ -1,12 +1,13 @@
 using System.Security.Claims;
 using GarageOps.Application.Tasks;
+using GarageOps.Application.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GarageOps.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Owner,Manager,ServiceAdvisor,Mechanic,Technician")]
+[Authorize]
 [Route("api/job-cards/{jobCardId:guid}/tasks")]
 public sealed class JobTasksController : ControllerBase
 {
@@ -18,6 +19,7 @@ public sealed class JobTasksController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.TasksManage)]
     public async Task<ActionResult<JobTaskResponse>> Create(
         Guid jobCardId,
         CreateJobTaskRequest request,
@@ -45,6 +47,7 @@ public sealed class JobTasksController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.TasksRead)]
     public async Task<ActionResult<IReadOnlyList<JobTaskResponse>>> GetAll(
         Guid jobCardId,
         CancellationToken cancellationToken)
@@ -56,10 +59,16 @@ public sealed class JobTasksController : ControllerBase
 
         try
         {
-            return Ok(await taskService.GetByJobCardAsync(
+            var tasks = await taskService.GetByJobCardAsync(
                 workshopId,
                 jobCardId,
-                cancellationToken));
+                cancellationToken);
+            if (User.IsInRole("Mechanic"))
+            {
+                if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Forbid();
+                tasks = tasks.Where(task => task.AssignedToUserId == userId).ToArray();
+            }
+            return Ok(tasks);
         }
         catch (KeyNotFoundException)
         {
@@ -67,7 +76,21 @@ public sealed class JobTasksController : ControllerBase
         }
     }
 
+    [HttpGet("~/api/job-tasks/mine")]
+    [Authorize(Policy = Permissions.TasksViewAssigned)]
+    public async Task<ActionResult<IReadOnlyList<JobTaskResponse>>> GetMine(CancellationToken cancellationToken)
+    {
+        if (!TryGetWorkshopId(out var workshopId)
+            || !Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Forbid();
+        }
+
+        return Ok(await taskService.GetAssignedToUserAsync(workshopId, userId, cancellationToken));
+    }
+
     [HttpPost("{taskId:guid}/assign")]
+    [Authorize(Policy = Permissions.TasksAssign)]
     public async Task<ActionResult<JobTaskResponse>> Assign(
         Guid jobCardId,
         Guid taskId,
@@ -86,12 +109,45 @@ public sealed class JobTasksController : ControllerBase
     }
 
     [HttpPatch("{taskId:guid}/status")]
+    [Authorize(Policy = Permissions.TasksUpdateAssigned)]
     public async Task<ActionResult<JobTaskResponse>> UpdateStatus(
         Guid jobCardId,
         Guid taskId,
         UpdateJobTaskStatusRequest request,
         CancellationToken cancellationToken)
     {
+        if (User.IsInRole("Mechanic"))
+        {
+            if (!TryGetWorkshopId(out var workshopId)
+                || !Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Forbid();
+            }
+
+            var assignedTasks = await taskService.GetByJobCardAsync(workshopId, jobCardId, cancellationToken);
+            var ownTask = assignedTasks.FirstOrDefault(task => task.Id == taskId && task.AssignedToUserId == userId);
+            if (ownTask is null) return Forbid();
+            if (request.Status is not GarageOps.Domain.Enums.TaskStatus.InProgress
+                and not GarageOps.Domain.Enums.TaskStatus.Completed)
+            {
+                return BadRequest("Staff can only start or complete tasks assigned to them.");
+            }
+            if ((ownTask.Status == GarageOps.Domain.Enums.TaskStatus.Assigned
+                    && request.Status != GarageOps.Domain.Enums.TaskStatus.InProgress)
+                || (ownTask.Status == GarageOps.Domain.Enums.TaskStatus.InProgress
+                    && request.Status != GarageOps.Domain.Enums.TaskStatus.Completed)
+                || ownTask.Status is not GarageOps.Domain.Enums.TaskStatus.Assigned
+                    and not GarageOps.Domain.Enums.TaskStatus.InProgress)
+            {
+                return BadRequest("Start an assigned task before completing it.");
+            }
+            if (request.Status == GarageOps.Domain.Enums.TaskStatus.Completed
+                && (request.ActualHours is null or <= 0 || string.IsNullOrWhiteSpace(request.WorkPerformed)))
+            {
+                return BadRequest("Work performed and actual hours are required to complete a task.");
+            }
+        }
+
         return await Update(
             jobCardId,
             taskId,

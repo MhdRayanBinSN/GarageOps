@@ -27,10 +27,10 @@ export const Topbar: React.FC = () => {
       <div className="flex items-center gap-3">
         <div className="text-right hidden sm:block">
           <p className="text-sm font-semibold text-slate-800 leading-tight">
-            {employeeRole || userType || 'User'}
+            {userType === 'WorkshopAdmin' ? 'Admin' : employeeRole === 'Manager' || employeeRole === 'FrontDesk' ? 'Front Desk' : employeeRole === 'Technician' || employeeRole === 'Mechanic' ? 'Mechanic' : userType === 'Customer' ? 'Customer' : employeeRole || userType || 'User'}
           </p>
           <span className="text-[11px] text-brand-red font-semibold uppercase tracking-wider">
-            {userType === 'WorkshopOwner' ? 'Workshop Owner' : employeeRole || 'Employee'}
+            {userType === 'WorkshopAdmin' ? 'Workshop Admin' : employeeRole === 'Manager' || employeeRole === 'FrontDesk' ? 'Front Desk' : employeeRole === 'Technician' || employeeRole === 'Mechanic' ? 'Mechanic' : userType === 'Customer' ? 'Customer Portal' : 'Legacy Inventory Account'}
           </span>
         </div>
 

@@ -1,20 +1,23 @@
 using System.Security.Claims;
 using GarageOps.Application.Customers;
+using GarageOps.Application.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GarageOps.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Owner,Manager,ServiceAdvisor")]
+[Authorize(Policy = Permissions.CustomersManage)]
 [Route("api/workshops/{workshopId:guid}/customers")]
 public sealed class CustomersController : ControllerBase
 {
     private readonly ICustomerService customerService;
+    private readonly ICustomerPortalService portalService;
 
-    public CustomersController(ICustomerService customerService)
+    public CustomersController(ICustomerService customerService, ICustomerPortalService portalService)
     {
         this.customerService = customerService;
+        this.portalService = portalService;
     }
 
     [HttpPost]
@@ -108,6 +111,22 @@ public sealed class CustomersController : ControllerBase
             cancellationToken);
 
         return deactivated ? NoContent() : NotFound();
+    }
+
+    [HttpPost("{customerId:guid}/portal-access")]
+    public async Task<ActionResult<CustomerPortalAccessResponse>> CreatePortalAccess(
+        Guid workshopId, Guid customerId, CreateCustomerPortalAccessRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!OwnsWorkshop(workshopId)) return Forbid();
+        try
+        {
+            var access = await portalService.CreateAccessAsync(workshopId, customerId, request, cancellationToken);
+            return Created("/api/customer-portal/me", access);
+        }
+        catch (KeyNotFoundException exception) { return NotFound(exception.Message); }
+        catch (InvalidOperationException exception) { return Conflict(exception.Message); }
+        catch (ArgumentException exception) { return BadRequest(exception.Message); }
     }
 
     private bool OwnsWorkshop(Guid workshopId)

@@ -14,9 +14,9 @@ const registerSchema = z.object({
   workshopPhone: z.string().min(5, 'Phone number is required'),
   workshopEmail: z.string().email('Invalid email address'),
   workshopAddress: z.string().min(3, 'Address is required'),
-  ownerUsername: z.string().min(3, 'Username must be at least 3 characters'),
-  ownerEmail: z.string().email('Invalid owner email address'),
-  ownerPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  adminUsername: z.string().min(3, 'Username must be at least 3 characters'),
+  adminEmail: z.string().email('Invalid Admin email address'),
+  adminPassword: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
 type RegisterFormValues = z.infer<typeof registerSchema>
@@ -59,7 +59,7 @@ export const RegisterPage: React.FC = () => {
             Register Workshop
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            Create your workshop profile and primary owner administrator
+            Create your workshop profile and primary Admin account
           </p>
         </div>
 
@@ -105,12 +105,12 @@ export const RegisterPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Owner Account Information Section */}
+            {/* Workshop Admin account information */}
             <div>
               <div className="flex items-center gap-2 pb-2 mb-4 border-b border-slate-200 text-slate-500">
                 <User className="w-4 h-4" />
                 <h3 className="font-display text-sm font-bold uppercase tracking-wider">
-                  Owner Admin Account
+                  Workshop Admin Account
                 </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -118,24 +118,24 @@ export const RegisterPage: React.FC = () => {
                   label="Admin Username"
                   placeholder="e.g. apexadmin"
                   leftIcon={<User className="w-4 h-4" />}
-                  error={errors.ownerUsername?.message}
-                  {...register('ownerUsername')}
+                  error={errors.adminUsername?.message}
+                  {...register('adminUsername')}
                 />
                 <Input
                   label="Admin Email"
                   type="email"
                   placeholder="admin@apex.com"
                   leftIcon={<Mail className="w-4 h-4" />}
-                  error={errors.ownerEmail?.message}
-                  {...register('ownerEmail')}
+                  error={errors.adminEmail?.message}
+                  {...register('adminEmail')}
                 />
                 <Input
                   label="Password"
                   type="password"
                   placeholder="••••••••••••"
                   leftIcon={<Lock className="w-4 h-4" />}
-                  error={errors.ownerPassword?.message}
-                  {...register('ownerPassword')}
+                  error={errors.adminPassword?.message}
+                  {...register('adminPassword')}
                 />
               </div>
             </div>

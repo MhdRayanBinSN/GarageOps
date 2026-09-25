@@ -29,4 +29,13 @@ public class Workshop : BaseEntity
         Email = email;
         Address = address;
     }
+
+    public void UpdateDetails(string name, string phone, string email, string address)
+    {
+        Name = name;
+        Phone = phone;
+        Email = email;
+        Address = address;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

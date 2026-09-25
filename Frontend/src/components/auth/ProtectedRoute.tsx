@@ -1,13 +1,15 @@
 import React from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import type { EmployeeRole } from '@/types'
+import type { AccessRole } from '@/types'
+import { getAccessRole, getHomePath } from '@/utils/permissions'
 
 interface ProtectedRouteProps {
-  allowedRoles?: EmployeeRole[]
+  allowedRoles?: AccessRole[]
+  children?: React.ReactNode
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children }) => {
   const { isAuthenticated, userType, employeeRole } = useAuthStore()
 
   if (!isAuthenticated()) {
@@ -15,13 +17,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
-    if (userType === 'WorkshopOwner') {
-      return <Outlet />
-    }
-    if (!employeeRole || !allowedRoles.includes(employeeRole)) {
-      return <Navigate to="/dashboard" replace />
+    const effectiveRole = getAccessRole(userType, employeeRole)
+    if (!effectiveRole || !allowedRoles.includes(effectiveRole)) {
+      return <Navigate to={getHomePath(userType, employeeRole)} replace />
     }
   }
 
-  return <Outlet />
+  return <>{children ?? <Outlet />}</>
 }

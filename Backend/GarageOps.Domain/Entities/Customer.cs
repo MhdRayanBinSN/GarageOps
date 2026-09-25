@@ -16,9 +16,13 @@ public class Customer : BaseEntity
 
     public string Address { get; private set; } = string.Empty;
 
+    public Guid? PortalUserId { get; private set; }
+
     public bool IsActive { get; private set; } = true;
 
     public Workshop Workshop { get; private set; } = null!;
+
+    public User? PortalUser { get; private set; }
 
     private Customer()
     {
@@ -64,6 +68,15 @@ public class Customer : BaseEntity
     public void Deactivate()
     {
         IsActive = false;
+        PortalUser?.Deactivate();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void LinkPortalUser(Guid userId)
+    {
+        if (PortalUserId is not null)
+            throw new InvalidOperationException("This customer already has a portal account.");
+        PortalUserId = userId;
         UpdatedAt = DateTime.UtcNow;
     }
 }

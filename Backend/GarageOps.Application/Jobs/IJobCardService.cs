@@ -22,4 +22,10 @@ public interface IJobCardService
         Guid jobCardId,
         UpdateJobStatusRequest request,
         CancellationToken cancellationToken);
+
+    Task<JobCardResponse?> UpdateDetailsAsync(
+        Guid workshopId,
+        Guid jobCardId,
+        UpdateJobCardDetailsRequest request,
+        CancellationToken cancellationToken);
 }

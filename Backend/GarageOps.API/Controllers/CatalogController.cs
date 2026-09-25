@@ -1,12 +1,13 @@
 using System.Security.Claims;
 using GarageOps.Application.Catalog;
+using GarageOps.Application.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GarageOps.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Owner,Manager,ServiceAdvisor")]
+[Authorize]
 [Route("api/workshops/{workshopId:guid}")]
 public sealed class CatalogController : ControllerBase
 {
@@ -18,6 +19,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpPost("services")]
+    [Authorize(Policy = Permissions.CatalogManage)]
     public async Task<ActionResult<ServiceResponse>> CreateService(Guid workshopId, CreateServiceRequest request, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -26,6 +28,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpGet("services")]
+    [Authorize(Policy = Permissions.CatalogView)]
     public async Task<ActionResult<IReadOnlyList<ServiceResponse>>> GetServices(Guid workshopId, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -33,6 +36,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpPut("services/{serviceId:guid}")]
+    [Authorize(Policy = Permissions.CatalogManage)]
     public async Task<ActionResult<ServiceResponse>> UpdateService(Guid workshopId, Guid serviceId, UpdateServiceRequest request, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -41,6 +45,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpDelete("services/{serviceId:guid}")]
+    [Authorize(Policy = Permissions.CatalogManage)]
     public async Task<ActionResult> DeactivateService(Guid workshopId, Guid serviceId, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -49,6 +54,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpPost("parts")]
+    [Authorize(Policy = Permissions.InventoryManage)]
     public async Task<ActionResult<PartResponse>> CreatePart(Guid workshopId, CreatePartRequest request, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -57,6 +63,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpGet("parts")]
+    [Authorize(Policy = Permissions.InventoryManage)]
     public async Task<ActionResult<IReadOnlyList<PartResponse>>> GetParts(Guid workshopId, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -64,6 +71,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpPut("parts/{partId:guid}")]
+    [Authorize(Policy = Permissions.InventoryManage)]
     public async Task<ActionResult<PartResponse>> UpdatePart(Guid workshopId, Guid partId, UpdatePartRequest request, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -72,6 +80,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpPatch("parts/{partId:guid}/stock")]
+    [Authorize(Policy = Permissions.InventoryManage)]
     public async Task<ActionResult<PartResponse>> AdjustStock(Guid workshopId, Guid partId, AdjustStockRequest request, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();
@@ -87,6 +96,7 @@ public sealed class CatalogController : ControllerBase
     }
 
     [HttpDelete("parts/{partId:guid}")]
+    [Authorize(Policy = Permissions.InventoryManage)]
     public async Task<ActionResult> DeactivatePart(Guid workshopId, Guid partId, CancellationToken cancellationToken)
     {
         if (!OwnsWorkshop(workshopId)) return Forbid();

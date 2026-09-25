@@ -49,6 +49,9 @@ namespace GarageOps.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("PortalUserId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -56,6 +59,9 @@ namespace GarageOps.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PortalUserId")
+                        .IsUnique();
 
                     b.HasIndex("WorkshopId");
 
@@ -168,6 +174,66 @@ namespace GarageOps.Infrastructure.Persistence.Migrations
                     b.ToTable("JobCards");
                 });
 
+            modelBuilder.Entity("GarageOps.Domain.Entities.JobPartRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("JobCardId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("JobTaskId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ProcessedByUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("WorkshopId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobCardId");
+
+                    b.HasIndex("JobTaskId");
+
+                    b.HasIndex("PartId");
+
+                    b.HasIndex("ProcessedByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("WorkshopId");
+
+                    b.ToTable("JobPartRequests");
+                });
+
             modelBuilder.Entity("GarageOps.Domain.Entities.JobTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -201,6 +267,10 @@ namespace GarageOps.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WorkPerformed")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -432,11 +502,18 @@ namespace GarageOps.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("GarageOps.Domain.Entities.Customer", b =>
                 {
+                    b.HasOne("GarageOps.Domain.Entities.User", "PortalUser")
+                        .WithMany()
+                        .HasForeignKey("PortalUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GarageOps.Domain.Entities.Workshop", "Workshop")
                         .WithMany()
                         .HasForeignKey("WorkshopId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("PortalUser");
 
                     b.Navigation("Workshop");
                 });
@@ -491,6 +568,55 @@ namespace GarageOps.Infrastructure.Persistence.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("Workshop");
+                });
+
+            modelBuilder.Entity("GarageOps.Domain.Entities.JobPartRequest", b =>
+                {
+                    b.HasOne("GarageOps.Domain.Entities.JobCard", "JobCard")
+                        .WithMany()
+                        .HasForeignKey("JobCardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GarageOps.Domain.Entities.JobTask", "JobTask")
+                        .WithMany()
+                        .HasForeignKey("JobTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GarageOps.Domain.Entities.Part", "Part")
+                        .WithMany()
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GarageOps.Domain.Entities.User", "ProcessedByUser")
+                        .WithMany()
+                        .HasForeignKey("ProcessedByUserId");
+
+                    b.HasOne("GarageOps.Domain.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GarageOps.Domain.Entities.Workshop", "Workshop")
+                        .WithMany()
+                        .HasForeignKey("WorkshopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobCard");
+
+                    b.Navigation("JobTask");
+
+                    b.Navigation("Part");
+
+                    b.Navigation("ProcessedByUser");
+
+                    b.Navigation("RequestedByUser");
 
                     b.Navigation("Workshop");
                 });

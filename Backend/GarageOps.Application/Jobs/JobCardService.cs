@@ -85,6 +85,18 @@ public sealed class JobCardService : IJobCardService
         return Map(jobCard);
     }
 
+    public async Task<JobCardResponse?> UpdateDetailsAsync(
+        Guid workshopId, Guid jobCardId, UpdateJobCardDetailsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var jobCard = await jobCardRepository.GetByIdAsync(jobCardId, workshopId, cancellationToken);
+        if (jobCard is null) return null;
+        jobCard.UpdateDetails(request.Title, request.Description, request.VehicleRegistrationNumber,
+            request.VehicleMake, request.VehicleModel, request.VehicleYear);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Map(jobCard);
+    }
+
     private static JobCardResponse Map(JobCard jobCard)
     {
         return new JobCardResponse(

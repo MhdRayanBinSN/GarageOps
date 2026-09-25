@@ -116,6 +116,7 @@ public sealed class CustomerService : ICustomerService
             customer.Phone,
             customer.Email,
             customer.Address,
-            customer.IsActive);
+            customer.IsActive,
+            customer.PortalUserId is not null);
     }
 }

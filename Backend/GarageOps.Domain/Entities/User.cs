@@ -47,10 +47,10 @@ public class User : BaseEntity
                 nameof(workshopId));
         }
 
-        if (userType == UserType.WorkshopOwner && employeeRole != Enums.EmployeeRole.Owner)
+        if (userType == UserType.WorkshopAdmin && employeeRole is not null)
         {
             throw new ArgumentException(
-                "A workshop owner must have the Owner employee role.",
+                "A workshop Admin is not an employee and cannot have an employee role.",
                 nameof(employeeRole));
         }
 

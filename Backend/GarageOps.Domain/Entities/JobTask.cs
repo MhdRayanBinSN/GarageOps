@@ -20,6 +20,8 @@ public class JobTask : BaseEntity
 
     public decimal? ActualHours { get; private set; }
 
+    public string WorkPerformed { get; private set; } = string.Empty;
+
     public JobCard JobCard { get; private set; } = null!;
 
     public User? AssignedToUser { get; private set; }
@@ -50,6 +52,16 @@ public class JobTask : BaseEntity
     public void UpdateStatus(JobTaskStatus status)
     {
         Status = status;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void RecordWork(decimal actualHours, string workPerformed)
+    {
+        if (actualHours <= 0) throw new ArgumentOutOfRangeException(nameof(actualHours));
+        if (string.IsNullOrWhiteSpace(workPerformed)) throw new ArgumentException("Work performed is required.", nameof(workPerformed));
+        ActualHours = actualHours;
+        WorkPerformed = workPerformed.Trim();
+        Status = JobTaskStatus.Completed;
         UpdatedAt = DateTime.UtcNow;
     }
 }

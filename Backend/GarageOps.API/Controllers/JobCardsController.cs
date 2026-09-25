@@ -1,12 +1,13 @@
 using System.Security.Claims;
 using GarageOps.Application.Jobs;
+using GarageOps.Application.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GarageOps.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Owner,Manager,ServiceAdvisor")]
+[Authorize(Policy = Permissions.JobsManage)]
 [Route("api/workshops/{workshopId:guid}/job-cards")]
 public sealed class JobCardsController : ControllerBase
 {
@@ -90,6 +91,16 @@ public sealed class JobCardsController : ControllerBase
             request,
             cancellationToken);
 
+        return jobCard is null ? NotFound() : Ok(jobCard);
+    }
+
+    [HttpPut("{jobCardId:guid}/details")]
+    public async Task<ActionResult<JobCardResponse>> UpdateDetails(
+        Guid workshopId, Guid jobCardId, UpdateJobCardDetailsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!OwnsWorkshop(workshopId)) return Forbid();
+        var jobCard = await jobCardService.UpdateDetailsAsync(workshopId, jobCardId, request, cancellationToken);
         return jobCard is null ? NotFound() : Ok(jobCard);
     }
 

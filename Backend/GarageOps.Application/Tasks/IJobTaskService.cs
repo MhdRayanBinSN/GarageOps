@@ -13,6 +13,11 @@ public interface IJobTaskService
         Guid jobCardId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<JobTaskResponse>> GetAssignedToUserAsync(
+        Guid workshopId,
+        Guid userId,
+        CancellationToken cancellationToken);
+
     Task<JobTaskResponse?> AssignAsync(
         Guid workshopId,
         Guid jobCardId,

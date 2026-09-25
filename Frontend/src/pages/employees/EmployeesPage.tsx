@@ -14,19 +14,21 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { UserCog, Plus, Shield, User, Lock, Mail, Trash2 } from 'lucide-react'
+import { UserCog, Plus, Shield, User, Lock, Mail, Trash2, UserCheck } from 'lucide-react'
+import { hasPermission } from '@/utils/permissions'
 
 const employeeSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Valid email address is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  employeeRole: z.enum(['Owner', 'Manager', 'ServiceAdvisor', 'Mechanic', 'Technician']),
+  employeeRole: z.enum(['FrontDesk', 'Mechanic']),
 })
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>
 
 export const EmployeesPage: React.FC = () => {
-  const { workshopId } = useAuthStore()
+  const { workshopId, userType, employeeRole } = useAuthStore()
+  const canAssignRoles = hasPermission(userType, employeeRole, 'employees:manage')
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deactivatingEmployeeId, setDeactivatingEmployeeId] = useState<string | null>(null)
@@ -88,6 +90,15 @@ export const EmployeesPage: React.FC = () => {
     },
   })
 
+  const activateMutation = useMutation({
+    mutationFn: (empId: string) => employeesApi.activate(workshopId!, empId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees', workshopId] })
+      showToast('Employee activated', 'success')
+    },
+    onError: (err: any) => showToast(err.response?.data?.message || 'Failed to activate employee', 'error'),
+  })
+
   const closeModal = () => {
     setIsModalOpen(false)
     reset()
@@ -123,11 +134,11 @@ export const EmployeesPage: React.FC = () => {
       header: 'Role',
       render: (e) => {
         const roleColors: Record<string, string> = {
-          Owner: 'bg-brand-red/20 text-brand-red border border-brand-red/30',
-          Manager: 'bg-amber-50 text-amber-700 border border-amber-200',
-          ServiceAdvisor: 'bg-blue-50 text-blue-700 border border-blue-200',
+          FrontDesk: 'bg-blue-50 text-blue-700 border border-blue-200',
           Mechanic: 'bg-purple-50 text-purple-700 border border-purple-200',
-          Technician: 'bg-teal-50 text-teal-700 border border-teal-200',
+          InventoryStaff: 'bg-amber-50 text-amber-700 border border-amber-200',
+          Manager: 'bg-blue-50 text-blue-700 border border-blue-200',
+          Technician: 'bg-purple-50 text-purple-700 border border-purple-200',
         }
         return (
           <span
@@ -135,7 +146,7 @@ export const EmployeesPage: React.FC = () => {
               roleColors[e.employeeRole] || 'bg-slate-100 text-slate-700'
             }`}
           >
-            {e.employeeRole.replace(/([A-Z])/g, ' $1').trim()}
+            {e.employeeRole === 'Manager' ? 'Front Desk (Legacy)' : e.employeeRole === 'Technician' ? 'Mechanic (Legacy)' : e.employeeRole === 'InventoryStaff' ? 'Legacy Inventory' : e.employeeRole === 'FrontDesk' ? 'Front Desk' : e.employeeRole}
           </span>
         )
       },
@@ -159,17 +170,22 @@ export const EmployeesPage: React.FC = () => {
       className: 'text-right',
       render: (e) => (
         <div className="flex items-center justify-end gap-2">
-          <Button
+          {canAssignRoles && <Button
             size="sm"
             variant="ghost"
             onClick={() => {
               setRoleModalEmployee(e)
-              setSelectedRole(e.employeeRole)
+              setSelectedRole(e.employeeRole === 'Mechanic' || e.employeeRole === 'Technician' ? 'Mechanic' : 'FrontDesk')
             }}
           >
             Edit Role
-          </Button>
-          {e.isActive && (
+          </Button>}
+          {canAssignRoles && !e.isActive && <button
+            onClick={() => activateMutation.mutate(e.id)}
+            className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50 transition-colors"
+            title="Activate Employee"
+          ><UserCheck className="w-4 h-4" /></button>}
+          {canAssignRoles && e.isActive && (
             <button
               onClick={() => setDeactivatingEmployeeId(e.id)}
               className="p-1.5 rounded-lg text-slate-500 hover:text-brand-red hover:bg-rose-50 transition-colors"
@@ -192,9 +208,7 @@ export const EmployeesPage: React.FC = () => {
             <UserCog className="w-6 h-6 text-brand-red" />
             Workshop Team & Roles
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage mechanics, technicians, service advisors, and role permissions
-          </p>
+          <p className="text-xs text-slate-500 mt-1">Manage Front Desk and Mechanic accounts and access</p>
         </div>
         <Button
           onClick={() => setIsModalOpen(true)}

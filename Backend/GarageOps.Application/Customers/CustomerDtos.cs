@@ -22,4 +22,5 @@ public sealed record CustomerResponse(
     string Phone,
     string Email,
     string Address,
-    bool IsActive);
+    bool IsActive,
+    bool HasPortalAccess = false);

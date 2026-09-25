@@ -6,20 +6,20 @@ namespace GarageOps.Tests;
 public class DomainEntityTests
 {
     [Fact]
-    public void WorkshopOwnerRequiresOwnerRole()
+    public void WorkshopAdminHasNoEmployeeRole()
     {
         var workshopId = Guid.NewGuid();
 
-        var owner = new User(
+        var admin = new User(
             workshopId,
-            "owner",
-            "owner@example.com",
+            "admin",
+            "admin@example.com",
             "hashed-password",
-            UserType.WorkshopOwner,
-            EmployeeRole.Owner);
+            UserType.WorkshopAdmin,
+            null);
 
-        Assert.Equal(UserType.WorkshopOwner, owner.UserType);
-        Assert.Equal(EmployeeRole.Owner, owner.EmployeeRole);
+        Assert.Equal(UserType.WorkshopAdmin, admin.UserType);
+        Assert.Null(admin.EmployeeRole);
     }
 
     [Fact]

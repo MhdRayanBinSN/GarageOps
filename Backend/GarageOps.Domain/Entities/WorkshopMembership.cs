@@ -30,4 +30,22 @@ public class WorkshopMembership : BaseEntity
         UserId = userId;
         EmployeeRole = employeeRole;
     }
+
+    public void ChangeRole(EmployeeRole employeeRole)
+    {
+        EmployeeRole = employeeRole;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

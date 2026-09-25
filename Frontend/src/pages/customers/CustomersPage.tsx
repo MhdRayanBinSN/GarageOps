@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { Users, Plus, Search, Edit2, Trash2, Phone, Mail, MapPin } from 'lucide-react'
+import { Users, Plus, Search, Edit2, Trash2, Phone, Mail, MapPin, UserRoundPlus } from 'lucide-react'
 
 const customerSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -31,6 +31,9 @@ export const CustomersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<CustomerResponse | null>(null)
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null)
+  const [portalCustomer, setPortalCustomer] = useState<CustomerResponse | null>(null)
+  const [portalUsername, setPortalUsername] = useState('')
+  const [portalPassword, setPortalPassword] = useState('')
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers', workshopId],
@@ -83,6 +86,17 @@ export const CustomersPage: React.FC = () => {
     onError: (err: any) => {
       showToast(err.response?.data?.message || 'Failed to delete customer', 'error')
     },
+  })
+
+  const portalMutation = useMutation({
+    mutationFn: () => customersApi.createPortalAccess(workshopId!, portalCustomer!.id, { username: portalUsername, password: portalPassword }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers', workshopId] })
+      showToast('Customer portal access created', 'success')
+      setPortalCustomer(null)
+      setPortalPassword('')
+    },
+    onError: (err: any) => showToast(err.response?.data?.message || 'Could not create portal access', 'error'),
   })
 
   const openCreateModal = () => {
@@ -184,6 +198,11 @@ export const CustomersPage: React.FC = () => {
       className: 'text-right',
       render: (c) => (
         <div className="flex items-center justify-end gap-2">
+          {!c.hasPortalAccess && <button
+            onClick={() => { setPortalCustomer(c); setPortalUsername(c.email); setPortalPassword('') }}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-brand-red hover:bg-rose-50 transition-colors"
+            title="Create customer portal access"
+          ><UserRoundPlus className="w-4 h-4" /></button>}
           <button
             onClick={() => openEditModal(c)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
@@ -306,6 +325,18 @@ export const CustomersPage: React.FC = () => {
             >
               {editingCustomer ? 'Update Customer' : 'Create Customer'}
             </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={!!portalCustomer} onClose={() => setPortalCustomer(null)} title="Create customer portal access" size="sm">
+        <form onSubmit={(event) => { event.preventDefault(); portalMutation.mutate() }} className="space-y-4">
+          <p className="text-sm text-slate-600">Create sign-in access for {portalCustomer?.firstName} {portalCustomer?.lastName}. They will only see their own workshop records.</p>
+          <Input label="Username" value={portalUsername} onChange={(event) => setPortalUsername(event.target.value)} required minLength={3} />
+          <Input label="Temporary password" type="password" value={portalPassword} onChange={(event) => setPortalPassword(event.target.value)} required minLength={8} />
+          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setPortalCustomer(null)}>Cancel</Button>
+            <Button type="submit" isLoading={portalMutation.isPending}>Create access</Button>
           </div>
         </form>
       </Modal>
